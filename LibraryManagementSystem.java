@@ -1,9 +1,11 @@
 package schoolman;
  
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.event.ActionListener
+import java.util.Scanner;
  
 class DynamicArray<T> {
     private final T[] array;
@@ -87,7 +89,7 @@ class Library {
     }
 }
  
-public class LibraryManagementSystemGUI extends JFrame {
+    public class LibraryManagementSystemGUI extends JFrame {
     private final Library library;
     private final JTextArea displayArea;
     private final JTextField titleField, authorField, priceField;
@@ -156,5 +158,83 @@ public class LibraryManagementSystemGUI extends JFrame {
  
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> new LibraryManagementSystemGUI().setVisible(true));
+      
+public class LibraryManagementSystem {
+    private static final Library library = new Library();
+    private static final Scanner scanner = new Scanner(System.in);
+ 
+    public static void main(String[] args) {
+        while (true) {
+            System.out.println("\n1. Add Book");
+            System.out.println("2. Remove Book");
+            System.out.println("3. Search Book");
+            System.out.println("4. Display All Books");
+            System.out.println("5. Exit");
+            System.out.print("Enter your choice: ");
+ 
+            int choice = scanner.nextInt();
+            scanner.nextLine(); // Consume newline
+ 
+            switch (choice) {
+                case 1:
+                    addBook();
+                    break;
+                case 2:
+                    removeBook();
+                    break;
+                case 3:
+                    searchBook();
+                    break;
+                case 4:
+                    displayAllBooks();
+                    break;
+                case 5:
+                    System.out.println("Exiting...");
+                    return;
+                default:
+                    System.out.println("Invalid choice. Please try again.");
+            }
+        }
+    }
+ 
+    private static void addBook() {
+        System.out.print("Enter title: ");
+        String title = scanner.nextLine();
+        System.out.print("Enter author: ");
+        String author = scanner.nextLine();
+        System.out.print("Enter price: ");
+        String price = scanner.nextLine();
+ 
+        Book book = new Book(title, author, price);
+        library.addBook(book);
+        System.out.println("Book added successfully.");
+    }
+ 
+    private static void removeBook() {
+        System.out.print("Enter index to remove: ");
+        int index = scanner.nextInt();
+        Book removed = library.removeBook(index);
+        if (removed != null) {
+            System.out.println("Removed book: " + removed);
+        } else {
+            System.out.println("No book found at this index.");
+        }
+    }
+ 
+    private static void searchBook() {
+        System.out.print("Enter index to search: ");
+        int index = scanner.nextInt();
+        Book book = library.getBook(index);
+        if (book != null) {
+            System.out.println("Found book: " + book);
+        } else {
+            System.out.println("No book found at this index.");
+        }
+    }
+ 
+    private static void displayAllBooks() {
+        for (int i = 0; i < library.getTotalBooks(); i++) {
+            System.out.println(i + ": " + library.getBook(i));
+        }
     }
 }
