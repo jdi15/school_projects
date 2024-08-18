@@ -1,5 +1,10 @@
 package schoolman;
  
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener
 import java.util.Scanner;
  
 class DynamicArray<T> {
@@ -84,6 +89,76 @@ class Library {
     }
 }
  
+    public class LibraryManagementSystemGUI extends JFrame {
+    private final Library library;
+    private final JTextArea displayArea;
+    private final JTextField titleField, authorField, priceField;
+ 
+    public LibraryManagementSystemGUI() {
+        library = new Library();
+        titleField = new JTextField();
+        authorField = new JTextField();
+        priceField = new JTextField();
+        displayArea = new JTextArea();
+        initializeUI();
+    }
+ 
+    private void initializeUI() {
+        setTitle("Library Management System");
+        setSize(400, 300);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLayout(new BorderLayout());
+ 
+        JPanel inputPanel = new JPanel(new GridLayout(3, 2));
+        inputPanel.add(new JLabel("Title:"));
+        inputPanel.add(titleField);
+        inputPanel.add(new JLabel("Author:"));
+        inputPanel.add(authorField);
+        inputPanel.add(new JLabel("Price:"));
+        inputPanel.add(priceField);
+ 
+        JButton addButton = new JButton("Add Book");
+        JButton displayButton = new JButton("Display Books");
+ 
+        addButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String title = titleField.getText();
+                String author = authorField.getText();
+                String price = priceField.getText();
+                Book book = new Book(title, author, price);
+                library.addBook(book);
+                displayArea.setText("Book added successfully.");
+            }
+        });
+ 
+        displayButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                displayAllBooks();
+            }
+        });
+ 
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.add(addButton);
+        buttonPanel.add(displayButton);
+ 
+        add(inputPanel, BorderLayout.NORTH);
+        add(new JScrollPane(displayArea), BorderLayout.CENTER);
+        add(buttonPanel, BorderLayout.SOUTH);
+    }
+ 
+    private void displayAllBooks() {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < library.getTotalBooks(); i++) {
+            sb.append(i).append(": ").append(library.getBook(i)).append("\n");
+        }
+        displayArea.setText(sb.toString());
+    }
+ 
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> new LibraryManagementSystemGUI().setVisible(true));
+      
 public class LibraryManagementSystem {
     private static final Library library = new Library();
     private static final Scanner scanner = new Scanner(System.in);
