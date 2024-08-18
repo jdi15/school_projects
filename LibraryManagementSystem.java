@@ -1,16 +1,24 @@
 package schoolman;
  
-
-import javax.swing.*;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener
-import java.util.Scanner;
+import java.awt.event.ActionListener;
+ 
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
  
 class DynamicArray<T> {
     private final T[] array;
     private int count;
     private static final int CAPACITY = 100;
+ 
  
     @SuppressWarnings("unchecked")
     public DynamicArray() {
@@ -19,25 +27,40 @@ class DynamicArray<T> {
     }
  
     public void add(T element) {
-        if (count < CAPACITY) {
-            array[count++] = element;
+        for (int i = 0; i < CAPACITY; i++) {
+            if (array[i] == null) {
+                array[i] = element;
+                count++;
+                break;
+            }
+        }
+    }
+ 
+    public void add(int index, T element) {
+        if (index >= 0 && index < CAPACITY) {
+            if (array[index] == null && element != null) {
+                count++;
+            } else if (array[index] != null && element == null) {
+                count--;
+            }
+            array[index] = element;
         }
     }
  
     public T remove(int index) {
-        if (index >= 0 && index < count) {
+        if (index >= 0 && index < CAPACITY) {
             T removed = array[index];
-            for (int i = index; i < count - 1; i++) {
-                array[i] = array[i + 1];
+            if (removed != null) {
+                array[index] = null;
+                count--;
             }
-            array[--count] = null;
             return removed;
         }
         return null;
     }
  
     public T get(int index) {
-        if (index >= 0 && index < count) {
+        if (index >= 0 && index < CAPACITY) {
             return array[index];
         }
         return null;
@@ -45,6 +68,14 @@ class DynamicArray<T> {
  
     public int size() {
         return count;
+    }
+ 
+    public boolean isEmpty() {
+        return count == 0;
+    }
+ 
+    public int capacity() {
+        return CAPACITY;
     }
 }
  
@@ -76,165 +107,196 @@ class Library {
         books.add(book);
     }
  
+    public void insertBook(int index, Book book) {
+        books.add(index, book);
+    }
+ 
     public Book removeBook(int index) {
         return books.remove(index);
     }
  
-    public Book getBook(int index) {
+    public Book searchBook(int index) {
         return books.get(index);
     }
  
     public int getTotalBooks() {
         return books.size();
     }
+ 
+    public String getAllBooks() {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < books.capacity(); i++) {
+            Book book = books.get(i);
+            if (book != null) {
+                sb.append(i).append(": ").append(book).append("\n");
+            }
+        }
+        return sb.toString();
+    }
+ 
+    public boolean isEmpty() {
+        return books.isEmpty();
+    }
 }
  
-    public class LibraryManagementSystemGUI extends JFrame {
+@SuppressWarnings("serial")
+public class LibraryManagementSystemGUI extends JFrame {
     private final Library library;
     private final JTextArea displayArea;
-    private final JTextField titleField, authorField, priceField;
+    private final JTextField titleField, authorField, priceField, indexField;
  
     public LibraryManagementSystemGUI() {
         library = new Library();
         titleField = new JTextField();
         authorField = new JTextField();
         priceField = new JTextField();
+        indexField = new JTextField();
         displayArea = new JTextArea();
         initializeUI();
     }
  
     private void initializeUI() {
         setTitle("Library Management System");
-        setSize(400, 300);
+        setSize(600, 400);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
  
-        JPanel inputPanel = new JPanel(new GridLayout(3, 2));
+        // Input Panel
+        JPanel inputPanel = new JPanel(new GridLayout(5, 2));
         inputPanel.add(new JLabel("Title:"));
         inputPanel.add(titleField);
         inputPanel.add(new JLabel("Author:"));
         inputPanel.add(authorField);
         inputPanel.add(new JLabel("Price:"));
         inputPanel.add(priceField);
+        inputPanel.add(new JLabel("Index:"));
+        inputPanel.add(indexField);
  
+        // Buttons
         JButton addButton = new JButton("Add Book");
-        JButton displayButton = new JButton("Display Books");
+        JButton removeButton = new JButton("Remove Book");
+        JButton searchButton = new JButton("Search Book");
+        JButton displayAllButton = new JButton("Display All Books");
+        JButton totalBooksButton = new JButton("Total Books");
  
+        inputPanel.add(addButton);
+        inputPanel.add(removeButton);
+ 
+        add(inputPanel, BorderLayout.NORTH);
+ 
+        // Display Area
+        displayArea.setEditable(false);
+        JScrollPane scrollPane = new JScrollPane(displayArea);
+        add(scrollPane, BorderLayout.CENTER);
+ 
+        // Button Panel
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.add(searchButton);
+        buttonPanel.add(displayAllButton);
+        buttonPanel.add(totalBooksButton);
+        add(buttonPanel, BorderLayout.SOUTH);
+ 
+        // Action Listeners
         addButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 String title = titleField.getText();
                 String author = authorField.getText();
                 String price = priceField.getText();
-                Book book = new Book(title, author, price);
-                library.addBook(book);
-                displayArea.setText("Book added successfully.");
+                String indexText = indexField.getText();
+ 
+                if (!title.isEmpty() && !author.isEmpty() && !price.isEmpty()) {
+                    Book book = new Book(title, author, price);
+ 
+                    if (!indexText.isEmpty()) {
+                        try {
+                            int index = Integer.parseInt(indexText);
+                            library.insertBook(index, book);
+                            displayArea.setText("Book inserted at index " + index + " successfully.");
+                        } catch (NumberFormatException ex) {
+                            library.addBook(book);
+                            displayArea.setText("Invalid index. Book added to the end.");
+                        }
+                    } else {
+                        library.addBook(book);
+                        displayArea.setText("Book added to the end successfully.");
+                    }
+ 
+                    clearInputFields();
+                    updateDisplay();
+                } else {
+                    displayArea.setText("Please fill all fields.");
+                }
             }
         });
  
-        displayButton.addActionListener(new ActionListener() {
+        removeButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                displayAllBooks();
+                try {
+                    int index = Integer.parseInt(indexField.getText());
+                    Book removedBook = library.removeBook(index);
+                    if (removedBook != null) {
+                        displayArea.setText("Book removed: " + removedBook);
+                    } else {
+                        displayArea.setText("No book found at this index.");
+                    }
+                    updateDisplay();
+                } catch (NumberFormatException ex) {
+                    displayArea.setText("Please enter a valid index.");
+                }
             }
         });
  
-        JPanel buttonPanel = new JPanel();
-        buttonPanel.add(addButton);
-        buttonPanel.add(displayButton);
+        searchButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    int index = Integer.parseInt(indexField.getText());
+                    Book book = library.searchBook(index);
+                    if (book != null) {
+                        displayArea.setText("Book found: " + book);
+                    } else {
+                        displayArea.setText("No book found at this index.");
+                    }
+                } catch (NumberFormatException ex) {
+                    displayArea.setText("Please enter a valid index.");
+                }
+            }
+        });
  
-        add(inputPanel, BorderLayout.NORTH);
-        add(new JScrollPane(displayArea), BorderLayout.CENTER);
-        add(buttonPanel, BorderLayout.SOUTH);
+        displayAllButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                updateDisplay();
+            }
+        });
+ 
+        totalBooksButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                displayArea.setText("Total number of books: " + library.getTotalBooks());
+            }
+        });
     }
  
-    private void displayAllBooks() {
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < library.getTotalBooks(); i++) {
-            sb.append(i).append(": ").append(library.getBook(i)).append("\n");
+    private void clearInputFields() {
+        titleField.setText("");
+        authorField.setText("");
+        priceField.setText("");
+        indexField.setText("");
+    }
+ 
+    private void updateDisplay() {
+        String allBooks = library.getAllBooks();
+        if (allBooks.isEmpty()) {
+            displayArea.setText("The library is empty.");
+        } else {
+            displayArea.setText(allBooks);
         }
-        displayArea.setText(sb.toString());
     }
  
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> new LibraryManagementSystemGUI().setVisible(true));
-      
-public class LibraryManagementSystem {
-    private static final Library library = new Library();
-    private static final Scanner scanner = new Scanner(System.in);
- 
-    public static void main(String[] args) {
-        while (true) {
-            System.out.println("\n1. Add Book");
-            System.out.println("2. Remove Book");
-            System.out.println("3. Search Book");
-            System.out.println("4. Display All Books");
-            System.out.println("5. Exit");
-            System.out.print("Enter your choice: ");
- 
-            int choice = scanner.nextInt();
-            scanner.nextLine(); // Consume newline
- 
-            switch (choice) {
-                case 1:
-                    addBook();
-                    break;
-                case 2:
-                    removeBook();
-                    break;
-                case 3:
-                    searchBook();
-                    break;
-                case 4:
-                    displayAllBooks();
-                    break;
-                case 5:
-                    System.out.println("Exiting...");
-                    return;
-                default:
-                    System.out.println("Invalid choice. Please try again.");
-            }
-        }
-    }
- 
-    private static void addBook() {
-        System.out.print("Enter title: ");
-        String title = scanner.nextLine();
-        System.out.print("Enter author: ");
-        String author = scanner.nextLine();
-        System.out.print("Enter price: ");
-        String price = scanner.nextLine();
- 
-        Book book = new Book(title, author, price);
-        library.addBook(book);
-        System.out.println("Book added successfully.");
-    }
- 
-    private static void removeBook() {
-        System.out.print("Enter index to remove: ");
-        int index = scanner.nextInt();
-        Book removed = library.removeBook(index);
-        if (removed != null) {
-            System.out.println("Removed book: " + removed);
-        } else {
-            System.out.println("No book found at this index.");
-        }
-    }
- 
-    private static void searchBook() {
-        System.out.print("Enter index to search: ");
-        int index = scanner.nextInt();
-        Book book = library.getBook(index);
-        if (book != null) {
-            System.out.println("Found book: " + book);
-        } else {
-            System.out.println("No book found at this index.");
-        }
-    }
- 
-    private static void displayAllBooks() {
-        for (int i = 0; i < library.getTotalBooks(); i++) {
-            System.out.println(i + ": " + library.getBook(i));
-        }
     }
 }
